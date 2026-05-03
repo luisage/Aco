@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Navbar from "./components/Navbar";
 import Carrusel from "./components/Carrusel";
 import InfoEscuela from "./components/InfoEscuela";
