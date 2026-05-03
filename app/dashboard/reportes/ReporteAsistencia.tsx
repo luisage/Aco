@@ -94,7 +94,7 @@ export default function ReporteAsistencia() {
               <Tooltip
                 cursor={{ fill: "#f3f4f6" }}
                 contentStyle={{ borderRadius: "10px", border: "1px solid #e5e7eb", fontSize: 13 }}
-                formatter={(v: number | string) => [v, "Alumnos"]}
+                formatter={(v) => [v, "Alumnos"]}
                 labelFormatter={(l) => l}
               />
               <Bar dataKey="total" radius={[6, 6, 0, 0]} maxBarSize={48}>
