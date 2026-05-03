@@ -1,0 +1,316 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EstadoResena {
+  VISIBLE
+  OCULTA
+  PENDIENTE
+}
+
+enum EstadoAlumno {
+  ACTIVO
+  INACTIVO
+  BAJA
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+}
+
+enum EstadoPago {
+  COMPLETO
+  PARCIAL
+}
+
+enum ResultadoCombate {
+  VICTORIA
+  DERROTA
+  EMPATE
+  NO_CONTEST
+}
+
+model Alumno {
+  id                  Int           @id @default(autoincrement())
+  nombre              String        @db.VarChar(100)
+  apellido            String        @db.VarChar(100)
+  fechaNacimiento     DateTime      @map("fecha_nacimiento") @db.Date
+  telefono            String?       @db.VarChar(20)
+  fotoUrl             String?       @map("foto_url") @db.VarChar(500)
+
+  // Datos deportivos
+  estado              EstadoAlumno  @default(ACTIVO)
+  fechaInscripcion    DateTime      @map("fecha_inscripcion") @default(now()) @db.Date
+
+  // Datos de pago
+  mensualidad         Decimal       @db.Decimal(8, 2)
+  diaLimitePago       Int           @map("dia_limite_pago") @default(5)
+  
+  // Timestamps
+  creadoEn            DateTime      @map("creado_en") @default(now())
+
+  // Datos médicos
+  grupoSanguineo       String?
+  alergias             String?
+  lesionesAnteriores   String?
+  padecimientosHereditarios String?
+  usaLentes            Boolean @default(false)
+  usaOrtodoncia        Boolean @default(false)
+  usaZapatosOrtopedicos Boolean @default(false)
+
+  // Seguro médico
+  nombreSeguro  String?
+  numeroSeguro  String?
+
+  // Médico particular
+  nombreMedico    String?
+  domicilioMedico String?
+  telefonoMedico  String?
+
+  // Info adicional
+  notasAdicionales String?
+  otrosDeportes    String?
+  numerOHermanos    Int?
+
+  // Autorización de fotografías
+  autorizaFotos Boolean @default(false)
+  
+  // Relaciones
+  tutores             Tutor[]
+  personasAutorizadas PersonaAutorizada[]
+  expectativas        ExpectativaAlumno[]
+  pagos               Pago[]
+  asistencias         Asistencia[]
+  combates            Combate[]
+  
+  @@map("alumnos")
+}
+
+model Tutor {
+  id        Int      @id @default(autoincrement())
+  alumnoId  Int
+  alumno    Alumno   @relation(fields: [alumnoId], references: [id])
+
+  rol        RolTutor
+  nombre     String
+  apellidos  String
+  edad       Int?
+  ocupacion  String?
+  telefono   String
+}
+
+enum RolTutor {
+  MADRE
+  PADRE
+  TUTOR
+}
+
+model PersonaAutorizada {
+  id       Int    @id @default(autoincrement())
+  alumnoId Int
+  alumno   Alumno @relation(fields: [alumnoId], references: [id])
+
+  nombreCompleto String
+  telefono       String?
+}
+
+enum TipoExpectativa {
+  SOCIALIZAR
+  TRABAJO_EN_EQUIPO
+  COMPETENCIA_FORMAL
+  DESARROLLO_FISICO
+  CONTROL_DE_PESO
+  AUTOCONTROL
+  DISCIPLINA_Y_RESPETO
+  MEJORAR_CONDUCTA
+  ALEJARLO_DE_DISPOSITIVOS
+  APRENDER_A_DEFENDERSE
+}
+
+model ExpectativaAlumno {
+  id       Int             @id @default(autoincrement())
+  alumnoId Int
+  alumno   Alumno          @relation(fields: [alumnoId], references: [id])
+  tipo     TipoExpectativa
+
+  @@unique([alumnoId, tipo])
+}
+
+model Pago {
+  id                  Int           @id @default(autoincrement())
+  alumnoId            Int           @map("alumno_id")
+  fechaPago           DateTime      @map("fecha_pago") @default(now()) @db.Date
+  monto               Int       
+  metodoPago          MetodoPago    @map("metodo_pago") @default(EFECTIVO)
+  mesCorrespondiente  String        @map("mes_correspondiente") @db.VarChar(7)  // formato: "2025-01"
+  estadoPago          EstadoPago    @map("estado_pago") @default(PARCIAL)
+  notas               String?       @db.Text
+  registradoPor       String?       @map("registrado_por") @db.VarChar(100)
+  mensualidadCompleta Boolean  @default(false)
+
+  // Timestamps
+  creadoEn            DateTime      @map("creado_en") @default(now())
+
+  // Relaciones
+  alumno              Alumno        @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoId])
+  @@index([mesCorrespondiente])
+  @@index([estadoPago])
+  @@map("pagos")
+}
+
+// ============================================================
+// TABLA: Asistencia
+// ============================================================
+
+model Asistencia {
+  id                  Int           @id @default(autoincrement())
+  alumnoId            Int           @map("alumno_id")
+  fecha               DateTime      @default(now()) @db.Date
+  horaEntrada         DateTime      @map("hora_entrada") @db.Time
+  horaSalida          DateTime?     @map("hora_salida") @db.Time
+  observacion         String?       @db.Text
+
+  // Timestamps
+  creadoEn            DateTime      @map("creado_en") @default(now())
+
+  // Relaciones
+  alumno              Alumno        @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@unique([alumnoId, fecha])
+  @@index([alumnoId])
+  @@index([fecha])
+  @@map("asistencias")
+}
+
+// ============================================================
+// TABLA: Combate
+// ============================================================
+
+model Combate {
+  id                  Int               @id @default(autoincrement())
+  alumnoId            Int               @map("alumno_id")
+  fecha               DateTime          @db.Date
+  rival               String?            @db.VarChar(150)
+  resultado           ResultadoCombate
+  categoria           String?           @db.VarChar(50)
+  evento              String?           @db.VarChar(200)
+  lugar               String?           @db.VarChar(200)
+  notas               String?           @db.Text
+
+  // Timestamps
+  creadoEn            DateTime          @map("creado_en") @default(now())
+
+  // Relaciones
+  alumno              Alumno            @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoId])
+  @@index([fecha])
+  @@map("combates")
+}
+
+// ============================================================
+// TABLA: Resena
+// ============================================================
+
+model Resena {
+  id                  Int           @id @default(autoincrement())
+  fecha               DateTime      @default(now())
+  calificacion        Int           // 1 a 5 estrellas
+  comentario          String        @db.Text
+  estado              EstadoResena  @default(PENDIENTE)
+
+  // Timestamps
+  creadoEn            DateTime      @map("creado_en") @default(now())
+
+  @@index([estado])
+  @@map("resenas")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  usuario   String?  @unique
+  password  String
+  nombre    String?
+  apellido  String?
+  role      Role     @default(USER)
+  estatus   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+  USER
+}
+
+model Novedades {
+  id          Int      @id @default(autoincrement())
+  titulo      String    
+  descripcion  String   
+  vigencia     String?
+  estatus        Boolean  @default(true)
+}
+
+model categoriaProducto {
+  id          Int      @id @default(autoincrement())
+  nombre      String    
+  estatus        Boolean  @default(true)
+}
+
+model productos {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion  String
+  imagen     String?
+  publicId   String?
+  costo Int
+  categoria  String
+  estatus        Boolean  @default(true)
+  descripcionVenta String?
+  cantidad Int  @default(0)
+}
+
+model imagenCarrusel {
+  id          Int      @id @default(autoincrement())
+  nombre      String?
+  url     String
+  publicId   String?
+  estatus        Boolean  @default(true)
+}
+
+model videos {
+  id          Int      @id @default(autoincrement())
+  nombre      String? 
+  descripcion  String?   
+  url     String
+  publicId    String
+  estatus        Boolean  @default(true)
+  orden       Int      @default(0)
+  creadoEn    DateTime @default(now())
+}
+
+model costoExtraMensualidad {
+  id          Int      @id @default(autoincrement())
+  dias String
+  costo Int
+  descripcion String 
+}
+
+model pagoMesAlumno{
+  id          Int      @id @default(autoincrement())
+  alumnoId            Int               @map("alumno_id")
+  mes String  // formato: "2026-01"
+}
