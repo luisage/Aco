@@ -39,7 +39,11 @@ export default function ModalEditarResena({ resena, onClose, onUpdated }: Props)
     setLoading(true);
     try {
       const actualizada = await editarResena(resena.id, { calificacion, comentario, estado });
-      onUpdated(actualizada as Resena);
+      onUpdated({
+        ...actualizada,
+        fecha:    actualizada.fecha instanceof Date ? actualizada.fecha.toISOString() : String(actualizada.fecha),
+        creadoEn: actualizada.creadoEn instanceof Date ? actualizada.creadoEn.toISOString() : String(actualizada.creadoEn),
+      });
     } catch {
       setError("Error al actualizar. Intenta de nuevo.");
     } finally {
