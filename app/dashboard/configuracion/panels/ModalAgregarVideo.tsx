@@ -3,6 +3,40 @@ import { useRef, useState } from "react";
 import { crearVideo } from "@/app/actions/videos";
 import VideoUploader from "./VideoUploader";
 
+async function uploadVideoDirecto(
+  file: File,
+  onProgress: (pct: number) => void
+): Promise<{ url: string; publicId: string }> {
+  const signRes = await fetch("/api/upload/video/sign");
+  if (!signRes.ok) throw new Error("Error al obtener firma");
+  const { signature, timestamp, apiKey, cloudName, folder } = await signRes.json();
+
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("signature", signature);
+  fd.append("timestamp", String(timestamp));
+  fd.append("api_key", apiKey);
+  fd.append("folder", folder);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const res = JSON.parse(xhr.responseText);
+        resolve({ url: res.secure_url, publicId: res.public_id });
+      } else {
+        reject(new Error("Error al subir video a Cloudinary"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Error de red"));
+    xhr.send(fd);
+  });
+}
+
 interface Video {
   id: number;
   nombre: string | null;
@@ -20,6 +54,7 @@ interface Props {
 
 export default function ModalAgregarVideo({ onClose, onCreated }: Props) {
   const [loading, setLoading] = useState(false);
+  const [progreso, setProgreso] = useState(0);
   const [error, setError] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -36,13 +71,9 @@ export default function ModalAgregarVideo({ onClose, onCreated }: Props) {
     const orden = parseInt((fd.get("orden") as string) || "0", 10);
 
     setLoading(true);
+    setProgreso(0);
     try {
-      const uploadFd = new FormData();
-      uploadFd.append("file", videoFile);
-      const res = await fetch("/api/upload/video", { method: "POST", body: uploadFd });
-      if (!res.ok) throw new Error("Error al subir video");
-      const { url, publicId } = await res.json();
-
+      const { url, publicId } = await uploadVideoDirecto(videoFile, setProgreso);
       const nuevo = await crearVideo({ nombre, descripcion, url, publicId, orden });
       onCreated(nuevo as Video);
     } catch {
@@ -119,9 +150,21 @@ export default function ModalAgregarVideo({ onClose, onCreated }: Props) {
           </div>
 
           {loading && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3">
-              <span className="w-4 h-4 border-2 border-[#003087] border-t-transparent rounded-full animate-spin flex-shrink-0" />
-              <p className="text-[#003087] text-sm">Subiendo y optimizando video, esto puede tardar unos segundos…</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="w-4 h-4 border-2 border-[#003087] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <p className="text-[#003087] text-sm">
+                  {progreso < 100 ? `Subiendo video… ${progreso}%` : "Procesando video, esto puede tardar unos segundos…"}
+                </p>
+              </div>
+              {progreso < 100 && (
+                <div className="w-full bg-blue-200 rounded-full h-1.5">
+                  <div
+                    className="bg-[#003087] h-1.5 rounded-full transition-all duration-200"
+                    style={{ width: `${progreso}%` }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -146,7 +189,7 @@ export default function ModalAgregarVideo({ onClose, onCreated }: Props) {
               className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {loading ? "Subiendo..." : "Aceptar"}
+              {loading ? (progreso < 100 ? `Subiendo ${progreso}%` : "Procesando…") : "Aceptar"}
             </button>
           </div>
         </form>
