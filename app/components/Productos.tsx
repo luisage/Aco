@@ -11,11 +11,12 @@ export default async function Productos() {
     categoria: string;
   }[] = [];
   try {
-    productos = await prisma.productos.findMany({
+    const raw = await prisma.productos.findMany({
       where: { estatus: true },
       orderBy: { id: "desc" },
       take: 12,
     });
+    productos = raw.map((p) => ({ ...p, costo: Number(p.costo) }));
   } catch {
     return null;
   }

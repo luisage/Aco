@@ -18,5 +18,5 @@ export async function GET(req: NextRequest) {
     orderBy: { nombre: "asc" },
   });
 
-  return Response.json(productos);
+  return Response.json(productos.map((p) => ({ ...p, costo: Number(p.costo) })));
 }
