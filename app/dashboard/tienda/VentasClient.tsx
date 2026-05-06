@@ -15,7 +15,7 @@ interface ItemCarrito {
   cantidad: number;
 }
 
-const QR_REGEX = /^(\d+)\|([^|]+)\|$/;
+const QR_REGEX = /^(\d+)\|([^|]+)\|/;
 
 export default function VentasClient() {
   const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
@@ -28,7 +28,6 @@ export default function VentasClient() {
   const [error, setError] = useState("");
   const [exito, setExito] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [dbg, setDbg] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -138,7 +137,6 @@ export default function VentasClient() {
 
   async function startScan() {
     setError("");
-    setDbg([]);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -159,13 +157,9 @@ export default function VentasClient() {
     const timer = { id: undefined as ReturnType<typeof setTimeout> | undefined };
     const canvas = document.createElement("canvas");
     let loopStarted = false;
-    let scanCount = 0;
-
-    const log = (msg: string) => setDbg((prev) => [...prev.slice(-6), msg]);
 
     function handleFound(rawValue: string): boolean {
       const m = rawValue.trim().match(QR_REGEX);
-      log(`Detectado: "${rawValue}" → regex ${m ? "OK" : "NO coincide"}`);
       if (!m) return false;
       stopScan();
       const id = parseInt(m[1], 10);
@@ -180,29 +174,14 @@ export default function VentasClient() {
       loopStarted = true;
 
       const hasBarcodeDetector = "BarcodeDetector" in window;
-      log(`BarcodeDetector: ${hasBarcodeDetector ? "SÍ" : "NO"}`);
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const w = window as any;
-      if (hasBarcodeDetector) {
-        try {
-          const formats: string[] = await w.BarcodeDetector.getSupportedFormats();
-          log(`Formatos: ${formats.join(", ")}`);
-        } catch { log("No se pudieron leer formatos"); }
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const detector = hasBarcodeDetector ? new w.BarcodeDetector({ formats: ["qr_code"] }) : null;
+      const detector = hasBarcodeDetector ? new (window as any).BarcodeDetector({ formats: ["qr_code"] }) : null;
       const jsQR     = hasBarcodeDetector ? null : (await import("jsqr")).default;
-      log(`Motor: ${detector ? "BarcodeDetector" : "jsQR"}`);
 
       async function scan() {
         if (!scanActiveRef.current) return;
-        scanCount++;
 
         const w = video.videoWidth, h = video.videoHeight;
-        if (scanCount % 5 === 1) log(`Video ${w}×${h} state=${video.readyState}`);
-
         if (w > 0 && h > 0) {
           canvas.width  = w;
           canvas.height = h;
@@ -212,29 +191,24 @@ export default function VentasClient() {
             try {
               if (detector) {
                 const codes = await detector.detect(canvas);
-                if (codes.length > 0) {
-                  for (const c of codes) { if (handleFound(c.rawValue)) return; }
-                }
+                for (const c of codes) { if (handleFound(c.rawValue)) return; }
               } else if (jsQR) {
                 const img  = ctx.getImageData(0, 0, w, h);
                 const code = jsQR(img.data, img.width, img.height);
                 if (code && handleFound(code.data)) return;
               }
-            } catch (e) { log(`Error scan: ${e}`); }
+            } catch { /* frame no disponible, reintentar */ }
           }
-        } else if (scanCount % 5 === 1) {
-          log("Video sin dimensiones aún");
         }
 
         if (scanActiveRef.current) timer.id = setTimeout(scan, 300);
       }
 
-      log("Loop iniciado");
       scan();
     }
 
     video.addEventListener("loadedmetadata", startLoop);
-    video.play().then(() => { timer.id = setTimeout(startLoop, 200); }).catch((e) => log(`play() error: ${e}`));
+    video.play().then(() => { timer.id = setTimeout(startLoop, 200); }).catch(() => {});
 
     return () => {
       scanActiveRef.current = false;
@@ -257,14 +231,7 @@ export default function VentasClient() {
             autoPlay
             muted
           />
-          {/* Panel de debug — eliminar cuando el escáner funcione */}
-          {dbg.length > 0 && (
-            <div className="w-full max-w-sm bg-black/80 border border-white/20 rounded-xl px-3 py-2">
-              {dbg.map((line, i) => (
-                <p key={i} className="text-xs text-green-400 font-mono leading-5">{line}</p>
-              ))}
-            </div>
-          )}
+
           <button
             onClick={stopScan}
             className="px-8 py-2.5 bg-[#C8102E] hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors"
