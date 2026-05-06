@@ -79,7 +79,7 @@ export default function ModalAgregarProducto({ onClose, onCreated }: Props) {
         nombre, descripcion, descripcionVenta, cantidad, costo, categoria,
         imagen: imagenUrl, publicId: imagenPublicId,
       });
-      onCreated(nuevo as Producto);
+      onCreated({ ...nuevo, costo: Number(nuevo.costo) });
     } catch {
       setError("Error al guardar. Intenta de nuevo.");
     } finally {

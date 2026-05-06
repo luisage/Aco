@@ -93,7 +93,7 @@ export default function ModalEditarProducto({ producto, onClose, onUpdated }: Pr
         { nombre, descripcion, descripcionVenta, cantidad, costo, categoria, imagen: imagenUrl, publicId: imagenPublicId, estatus },
         producto.publicId
       );
-      onUpdated(actualizado as Producto);
+      onUpdated({ ...actualizado, costo: Number(actualizado.costo) });
     } catch {
       setError("Error al actualizar. Intenta de nuevo.");
     } finally {
