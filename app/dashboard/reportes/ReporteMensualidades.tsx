@@ -94,8 +94,8 @@ export default function ReporteMensualidades() {
                 width={72}
               />
               <Tooltip
-                formatter={(value: number) => [
-                  `$${value.toLocaleString("es-MX")}`,
+                formatter={(value) => [
+                  `$${Number(value).toLocaleString("es-MX")}`,
                   "Total recaudado",
                 ]}
                 labelStyle={{ fontWeight: 600, color: "#111827", marginBottom: 4 }}
