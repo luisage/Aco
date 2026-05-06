@@ -1,12 +1,15 @@
 "use client";
 import { useState } from "react";
 import ReporteAsistencia from "./ReporteAsistencia";
+import ReporteMensualidades from "./ReporteMensualidades";
+import ReporteVentas from "./ReporteVentas";
 
-type TipoReporte = "" | "asistencia" | "ingreso-mensual";
+type TipoReporte = "" | "asistencia" | "ingreso-mensual" | "ventas";
 
 const TIPOS: { value: TipoReporte; label: string }[] = [
   { value: "asistencia",      label: "Asistencia"      },
-  { value: "ingreso-mensual", label: "Ingreso mensual" },
+  { value: "ingreso-mensual", label: "Ingreso mensualidad" },
+  { value: "ventas",          label: "Ventas"          },
 ];
 
 export default function ReportesPage() {
@@ -51,7 +54,9 @@ export default function ReportesPage() {
           </div>
         )}
 
-        {tipo === "asistencia" && <ReporteAsistencia />}
+        {tipo === "asistencia"     && <ReporteAsistencia />}
+        {tipo === "ingreso-mensual" && <ReporteMensualidades />}
+        {tipo === "ventas"          && <ReporteVentas />}
       </div>
     </div>
   );

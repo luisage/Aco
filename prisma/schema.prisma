@@ -248,6 +248,7 @@ model User {
   role      Role     @default(USER)
   estatus   Boolean  @default(true)
   createdAt DateTime @default(now())
+  ventas      Venta[]
 }
 
 enum Role {
@@ -276,11 +277,34 @@ model productos {
   descripcion  String
   imagen     String?
   publicId   String?
-  costo Int
+  costo     Decimal @db.Decimal(8, 2)
   categoria  String
   estatus        Boolean  @default(true)
   descripcionVenta String?
   cantidad Int  @default(0)
+  detalles    DetalleVenta[]
+}
+
+model Venta {
+  id          Int            @id @default(autoincrement())
+  fecha       DateTime       @default(now())
+  total       Decimal        @db.Decimal(8, 2)
+  estatus     Boolean        @default(true)
+  metodoPago          MetodoPago    @map("metodo_pago") @default(EFECTIVO)
+  usuarioId   Int
+  usuario     User           @relation(fields: [usuarioId], references: [id])
+  detalles    DetalleVenta[]
+}
+
+model DetalleVenta {
+  id          Int       @id @default(autoincrement())
+  cantidad    Int
+  precioVenta Decimal   @db.Decimal(8, 2)
+  subtotal    Decimal   @db.Decimal(8, 2)
+  ventaId     Int
+  venta       Venta     @relation(fields: [ventaId], references: [id])
+  productoId  Int
+  producto    productos @relation(fields: [productoId], references: [id])
 }
 
 model imagenCarrusel {

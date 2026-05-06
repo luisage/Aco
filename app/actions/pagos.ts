@@ -1,6 +1,7 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { fechaHoyMexico } from "@/lib/fechaMexico";
 
 interface RegistrarPagoData {
   alumnoId: number;
@@ -28,6 +29,7 @@ export async function registrarPago(data: RegistrarPagoData) {
       await tx.pago.create({
         data: {
           alumnoId,
+          fechaPago: fechaHoyMexico(),
           monto,
           metodoPago,
           mesCorrespondiente,

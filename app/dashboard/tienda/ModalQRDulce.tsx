@@ -2,20 +2,19 @@
 import { useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
-interface Producto {
+interface Dulce {
   id: number;
   nombre: string;
-  descripcionVenta: string | null;
 }
 
 interface Props {
-  producto: Producto;
+  dulce: Dulce;
   onClose: () => void;
 }
 
-export default function ModalQRProducto({ producto, onClose }: Props) {
+export default function ModalQRDulce({ dulce, onClose }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
-  const qrValue = `${producto.id}|${producto.nombre}|${producto.descripcionVenta ?? ""}`;
+  const qrValue = `${dulce.id}|${dulce.nombre}|`;
 
   function getCanvas(): HTMLCanvasElement | null {
     return qrRef.current?.querySelector("canvas") ?? null;
@@ -31,7 +30,7 @@ export default function ModalQRProducto({ producto, onClose }: Props) {
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>QR — ${producto.nombre}</title>
+    <title>QR — ${dulce.nombre}</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { display: flex; flex-direction: column; align-items: center;
@@ -44,7 +43,7 @@ export default function ModalQRProducto({ producto, onClose }: Props) {
   </head>
   <body>
     <img src="${dataUrl}" alt="QR" />
-    <p>${producto.id} | ${producto.nombre}</p>
+    <p>${dulce.id} | ${dulce.nombre}</p>
     <script>window.onload = () => { window.print(); };<\/script>
   </body>
 </html>`);
@@ -57,7 +56,7 @@ export default function ModalQRProducto({ producto, onClose }: Props) {
     const dataUrl = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `qr_${producto.id}_${producto.nombre.replace(/\s+/g, "_")}.png`;
+    a.download = `qr_${dulce.id}_${dulce.nombre.replace(/\s+/g, "_")}.png`;
     a.click();
   }
 
@@ -90,11 +89,8 @@ export default function ModalQRProducto({ producto, onClose }: Props) {
 
           {/* Info */}
           <div className="text-center">
-            <p className="text-gray-800 text-sm font-semibold">{producto.nombre}</p>
-            {producto.descripcionVenta && (
-              <p className="text-gray-500 text-xs mt-0.5">{producto.descripcionVenta}</p>
-            )}
-            <p className="text-gray-400 text-xs mt-1">ID: {producto.id}</p>
+            <p className="text-gray-800 text-sm font-semibold">{dulce.nombre}</p>
+            <p className="text-gray-400 text-xs mt-1">ID: {dulce.id}</p>
           </div>
 
           {/* Botones — desktop: Imprimir / móvil+tablet: Guardar */}

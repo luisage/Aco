@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     const alumno = await prisma.alumno.findUnique({
       where: { id: alumnoId },
-      select: { id: true, nombre: true, apellido: true, mensualidad: true },
+      select: { id: true, nombre: true, apellido: true, mensualidad: true, telefono: true },
     });
     if (!alumno) return Response.json({ error: "Alumno no encontrado" }, { status: 404 });
 
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     const faltaPagar = Math.max(0, costoTotal - totalPagado);
 
     return Response.json({
-      alumno: { id: alumno.id, nombre: alumno.nombre, apellido: alumno.apellido },
+      alumno: { id: alumno.id, nombre: alumno.nombre, apellido: alumno.apellido, telefono: alumno.telefono ?? null },
       mesCorrespondiente,
       mesLabel,
       costoBase,

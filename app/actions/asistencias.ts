@@ -1,17 +1,15 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { ahoraEnMexico, fechaHoyMexico } from "@/lib/fechaMexico";
 
 export async function registrarAsistencia(alumnoId: number) {
   const session = await getSession();
   if (!session) throw new Error("No autorizado");
 
-  const ahora = new Date();
-  const fecha = new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate()));
-
   try {
     await prisma.asistencia.create({
-      data: { alumnoId, fecha, horaEntrada: ahora },
+      data: { alumnoId, fecha: fechaHoyMexico(), horaEntrada: ahoraEnMexico() },
     });
   } catch {
     // Restricción unique: ya existe la asistencia de hoy, no hacer nada
