@@ -152,46 +152,67 @@ export default function VentasClient() {
     if (!scanning || !videoRef.current || !streamRef.current) return;
     const video = videoRef.current;
     video.srcObject = streamRef.current;
-    video.play();
     scanActiveRef.current = true;
 
     const canvas = document.createElement("canvas");
-    let animId: number;
+    let timerId: ReturnType<typeof setTimeout>;
 
-    import("jsqr").then(({ default: jsQR }) => {
-      const loop = () => {
+    function handleFound(rawValue: string): boolean {
+      const m = rawValue.trim().match(QR_REGEX);
+      if (!m) return false;
+      stopScan();
+      const id = parseInt(m[1], 10);
+      fetch(`/api/productos/buscar?q=${id}`)
+        .then((r) => r.json())
+        .then((prods: Producto[]) => { if (prods.length > 0) agregarAlCarrito(prods[0]); });
+      return true;
+    }
+
+    async function startLoop() {
+      const hasBarcodeDetector = "BarcodeDetector" in window;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const detector = hasBarcodeDetector
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? new (window as any).BarcodeDetector({ formats: ["qr_code"] })
+        : null;
+
+      const jsQR = hasBarcodeDetector
+        ? null
+        : (await import("jsqr")).default;
+
+      async function scan() {
         if (!scanActiveRef.current) return;
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.drawImage(video, 0, 0);
-            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(img.data, img.width, img.height);
-            if (code) {
-              const m = code.data.trim().match(QR_REGEX);
-              if (m) {
-                stopScan();
-                const id = parseInt(m[1], 10);
-                fetch(`/api/productos/buscar?q=${id}`)
-                  .then((r) => r.json())
-                  .then((prods: Producto[]) => {
-                    if (prods.length > 0) agregarAlCarrito(prods[0]);
-                  });
-                return;
-              }
+        try {
+          if (detector) {
+            // API nativa — usa hardware del dispositivo, mejor detección en móvil
+            const codes = await detector.detect(video);
+            for (const c of codes) {
+              if (handleFound(c.rawValue)) return;
+            }
+          } else if (jsQR && video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+            canvas.width  = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.drawImage(video, 0, 0);
+              const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const code = jsQR(img.data, img.width, img.height);
+              if (code && handleFound(code.data)) return;
             }
           }
-        }
-        animId = requestAnimationFrame(loop);
-      };
-      animId = requestAnimationFrame(loop);
-    });
+        } catch { /* ignorar errores de frame */ }
+        if (scanActiveRef.current) timerId = setTimeout(scan, 250);
+      }
+
+      scan();
+    }
+
+    video.play().then(startLoop).catch(startLoop);
 
     return () => {
       scanActiveRef.current = false;
-      cancelAnimationFrame(animId);
+      clearTimeout(timerId);
     };
   }, [scanning, stopScan, agregarAlCarrito]);
 
