@@ -154,8 +154,10 @@ export default function VentasClient() {
     video.srcObject = streamRef.current;
     scanActiveRef.current = true;
 
+    // Objeto mutable para el timer — evita problemas de closure en el cleanup
+    const timer = { id: undefined as ReturnType<typeof setTimeout> | undefined };
     const canvas = document.createElement("canvas");
-    let timerId: ReturnType<typeof setTimeout>;
+    let loopStarted = false;
 
     function handleFound(rawValue: string): boolean {
       const m = rawValue.trim().match(QR_REGEX);
@@ -169,50 +171,54 @@ export default function VentasClient() {
     }
 
     async function startLoop() {
+      if (loopStarted || !scanActiveRef.current) return;
+      loopStarted = true;
+
       const hasBarcodeDetector = "BarcodeDetector" in window;
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const detector = hasBarcodeDetector
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? new (window as any).BarcodeDetector({ formats: ["qr_code"] })
-        : null;
-
-      const jsQR = hasBarcodeDetector
-        ? null
-        : (await import("jsqr")).default;
+      const detector = hasBarcodeDetector ? new (window as any).BarcodeDetector({ formats: ["qr_code"] }) : null;
+      const jsQR     = hasBarcodeDetector ? null : (await import("jsqr")).default;
 
       async function scan() {
         if (!scanActiveRef.current) return;
-        try {
-          if (detector) {
-            // API nativa — usa hardware del dispositivo, mejor detección en móvil
-            const codes = await detector.detect(video);
-            for (const c of codes) {
-              if (handleFound(c.rawValue)) return;
-            }
-          } else if (jsQR && video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext("2d");
-            if (ctx) {
-              ctx.drawImage(video, 0, 0);
-              const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const code = jsQR(img.data, img.width, img.height);
-              if (code && handleFound(code.data)) return;
-            }
+
+        // Capturar frame al canvas primero — más fiable que pasar el <video> directo
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(video, 0, 0);
+            try {
+              if (detector) {
+                const codes = await detector.detect(canvas);
+                for (const c of codes) {
+                  if (handleFound(c.rawValue)) return;
+                }
+              } else if (jsQR) {
+                const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(img.data, img.width, img.height);
+                if (code && handleFound(code.data)) return;
+              }
+            } catch { /* frame no disponible, reintentar */ }
           }
-        } catch { /* ignorar errores de frame */ }
-        if (scanActiveRef.current) timerId = setTimeout(scan, 250);
+        }
+
+        if (scanActiveRef.current) timer.id = setTimeout(scan, 300);
       }
 
       scan();
     }
 
-    video.play().then(startLoop).catch(startLoop);
+    // loadedmetadata garantiza que el video tiene dimensiones reales
+    video.addEventListener("loadedmetadata", startLoop);
+    // play() como respaldo por si loadedmetadata ya ocurrió
+    video.play().then(() => { timer.id = setTimeout(startLoop, 200); }).catch(() => {});
 
     return () => {
       scanActiveRef.current = false;
-      clearTimeout(timerId);
+      clearTimeout(timer.id);
+      video.removeEventListener("loadedmetadata", startLoop);
     };
   }, [scanning, stopScan, agregarAlCarrito]);
 
@@ -227,6 +233,7 @@ export default function VentasClient() {
             ref={videoRef}
             className="w-full max-w-sm rounded-2xl"
             playsInline
+            autoPlay
             muted
           />
           <button
