@@ -47,7 +47,7 @@ export default function ModalEditarDulce({ dulce, onClose, onUpdated }: Props) {
         dulce.id,
         { nombre, descripcion, costo, cantidad, categoria: "Tienda", estatus, imagen: null, publicId: null },
       );
-      onUpdated(actualizado as Dulce);
+      onUpdated({ ...actualizado, costo: Number(actualizado.costo) });
     } catch {
       setError("Error al actualizar. Intenta de nuevo.");
     } finally {

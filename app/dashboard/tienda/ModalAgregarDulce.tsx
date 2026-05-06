@@ -50,7 +50,7 @@ export default function ModalAgregarDulce({ onClose, onCreated }: Props) {
         imagen: null,
         publicId: null,
       });
-      onCreated(nuevo as Dulce);
+      onCreated({ ...nuevo, costo: Number(nuevo.costo) });
     } catch {
       setError("Error al guardar. Intenta de nuevo.");
     } finally {
