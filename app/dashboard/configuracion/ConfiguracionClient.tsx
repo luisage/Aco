@@ -42,6 +42,11 @@ const UsuariosPanel = dynamic(
   { loading: () => <PanelLoading /> }
 );
 
+const EventosPanel = dynamic(
+  () => import("./panels/EventosPanel"),
+  { loading: () => <PanelLoading /> }
+);
+
 const temasBase = [
   { value: "", label: "Selecciona una opción" },
   { value: "novedades", label: "Novedades" },
@@ -51,6 +56,7 @@ const temasBase = [
   { value: "imagen-carrusel", label: "Imagen carrusel" },
   { value: "videos", label: "Videos" },
   { value: "editar-contrasena", label: "Modificar contraseña" },
+  { value: "eventos",           label: "Eventos"             },
 ];
 
 function PanelLoading() {
@@ -116,6 +122,7 @@ export default function ConfiguracionClient({ role }: { role: string }) {
       {tema === "videos" && <VideosPanel />}
       {tema === "editar-contrasena" && <CambiarContrasenaPanel />}
       {tema === "agregar-usuario" && <UsuariosPanel />}
+      {tema === "eventos"         && <EventosPanel />}
     </div>
   );
 }

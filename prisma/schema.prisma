@@ -93,6 +93,7 @@ model Alumno {
   pagos               Pago[]
   asistencias         Asistencia[]
   combates            Combate[]
+  eventos AlumnoEvento[]
   
   @@map("alumnos")
 }
@@ -337,4 +338,49 @@ model pagoMesAlumno{
   id          Int      @id @default(autoincrement())
   alumnoId            Int               @map("alumno_id")
   mes String  // formato: "2026-01"
+}
+
+
+enum TipoEvento {
+  TORNEO
+  EXAMEN
+  SEMINARIO
+  EXHIBICION  
+  GRADUACION
+  CAMPAMENTO
+  OTRO
+}
+
+model Evento {
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  tipoEvento  TipoEvento
+  costo       Int
+  fecha       DateTime
+  hora        String?
+  estado      String?
+  ciudad      String?
+  ubicacion   String?
+  descripcion String?
+
+  // Relación con alumnos
+  alumnos     AlumnoEvento[]
+}
+
+model AlumnoEvento {
+  id        Int      @id @default(autoincrement())
+  alumnoId  Int
+  eventoId  Int
+  alumno    Alumno   @relation(fields: [alumnoId], references: [id])
+  evento    Evento   @relation(fields: [eventoId], references: [id])
+  pagado    Boolean   @default(false)
+
+  // Datos de participación
+  categoria    String?   
+  resultado    String?   
+  confirmado   Boolean   @default(true)
+  notas        String?
+  inscritoEn   DateTime  @default(now())
+
+  @@unique([alumnoId, eventoId])
 }
