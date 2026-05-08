@@ -12,15 +12,20 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const inscritos = await prisma.alumnoEvento.findMany({
     where: { eventoId },
-    include: { alumno: { select: { id: true, nombre: true, apellido: true } } },
+    include: {
+      alumno:      { select: { id: true, nombre: true, apellido: true } },
+      pagosEvento: { select: { monto: true } },
+    },
     orderBy: { inscritoEn: "asc" },
   });
 
   return Response.json(inscritos.map((i) => ({
-    id: i.id,
-    alumnoId: i.alumnoId,
-    nombre:   i.alumno.nombre,
-    apellido: i.alumno.apellido,
+    id:          i.id,
+    alumnoId:    i.alumnoId,
+    nombre:      i.alumno.nombre,
+    apellido:    i.alumno.apellido,
+    pagado:      i.pagado,
+    totalPagado: i.pagosEvento.reduce((s, p) => s + p.monto, 0),
   })));
 }
 

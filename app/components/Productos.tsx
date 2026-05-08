@@ -12,7 +12,7 @@ export default async function Productos() {
   }[] = [];
   try {
     const raw = await prisma.productos.findMany({
-      where: { estatus: true },
+      where: { estatus: true, NOT: { categoria: "Tienda" } },
       orderBy: { id: "desc" },
       take: 12,
     });

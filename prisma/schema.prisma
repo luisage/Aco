@@ -376,11 +376,29 @@ model AlumnoEvento {
   pagado    Boolean   @default(false)
 
   // Datos de participación
-  categoria    String?   
-  resultado    String?   
+  categoria    String?
+  resultado    String?
   confirmado   Boolean   @default(true)
   notas        String?
   inscritoEn   DateTime  @default(now())
 
+  pagosEvento  PagoEvento[]
+
   @@unique([alumnoId, eventoId])
+}
+
+model PagoEvento {
+  id             Int          @id @default(autoincrement())
+  alumnoEventoId Int          @map("alumno_evento_id")
+  monto          Int
+  metodoPago     MetodoPago   @map("metodo_pago") @default(EFECTIVO)
+  fechaPago      DateTime     @map("fecha_pago") @db.Date
+  notas          String?      @db.Text
+  registradoPor  String?      @map("registrado_por") @db.VarChar(100)
+  creadoEn       DateTime     @map("creado_en") @default(now())
+
+  alumnoEvento   AlumnoEvento @relation(fields: [alumnoEventoId], references: [id], onDelete: Cascade)
+
+  @@index([alumnoEventoId])
+  @@map("pagos_evento")
 }

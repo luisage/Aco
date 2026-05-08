@@ -1,12 +1,15 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { Evento } from "./EventosPanel";
+import ModalPagoEvento from "./ModalPagoEvento";
 
 interface AlumnoInscrito {
   id: number;
   alumnoId: number;
   nombre: string;
   apellido: string;
+  pagado: boolean;
+  totalPagado: number;
 }
 
 interface AlumnoBusqueda {
@@ -27,6 +30,7 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
   const [cargando, setCargando]     = useState(true);
   const [agregando, setAgregando]   = useState<number | null>(null);
   const [quitando, setQuitando]     = useState<number | null>(null);
+  const [pagoAlumno, setPagoAlumno] = useState<AlumnoInscrito | null>(null);
 
   const cargarInscritos = useCallback(async () => {
     setCargando(true);
@@ -61,8 +65,7 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
         body: JSON.stringify({ alumnoId: alumno.id }),
       });
       if (res.ok) {
-        const nuevo = await res.json();
-        setInscritos((prev) => [...prev, nuevo]);
+        await cargarInscritos();
       }
     } finally {
       setAgregando(null);
@@ -79,6 +82,14 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
     } finally {
       setQuitando(null);
     }
+  }
+
+  function badgePago(alumno: AlumnoInscrito) {
+    if (alumno.pagado)
+      return <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Pagado</span>;
+    if (alumno.totalPagado > 0)
+      return <span className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">Parcial</span>;
+    return <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Pendiente</span>;
   }
 
   return (
@@ -112,7 +123,6 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
               className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017]/50"
             />
 
-            {/* Resultados de búsqueda */}
             {resultados.length > 0 && (
               <div className="mt-2 bg-white border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
                 {resultados.map((a) => {
@@ -149,7 +159,6 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
             )}
           </div>
 
-          {/* Separador */}
           <div className="border-t border-gray-300" />
 
           {/* Alumnos inscritos */}
@@ -174,12 +183,25 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
             ) : (
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
                 {inscritos.map((i) => (
-                  <div key={i.id} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-sm text-gray-800">{i.nombre} {i.apellido}</span>
+                  <div key={i.id} className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">{i.nombre} {i.apellido}</span>
+                    {badgePago(i)}
+                    {/* Botón pago */}
+                    <button
+                      onClick={() => setPagoAlumno(i)}
+                      className="text-gray-400 hover:text-[#003087] transition-colors flex-shrink-0"
+                      title="Gestionar pago"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                    {/* Botón quitar */}
                     <button
                       onClick={() => quitar(i.id, i.alumnoId)}
                       disabled={quitando === i.id}
-                      className="text-gray-400 hover:text-[#C8102E] transition-colors disabled:opacity-40"
+                      className="text-gray-400 hover:text-[#C8102E] transition-colors disabled:opacity-40 flex-shrink-0"
                       title="Quitar del evento"
                     >
                       {quitando === i.id ? (
@@ -204,6 +226,21 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
           </button>
         </div>
       </div>
+
+      {pagoAlumno && (
+        <ModalPagoEvento
+          evento={evento}
+          alumnoId={pagoAlumno.alumnoId}
+          nombreAlumno={`${pagoAlumno.nombre} ${pagoAlumno.apellido}`}
+          onClose={() => setPagoAlumno(null)}
+          onPagado={() => {
+            setInscritos((prev) =>
+              prev.map((i) => i.id === pagoAlumno.id ? { ...i, pagado: true } : i)
+            );
+            setPagoAlumno(null);
+          }}
+        />
+      )}
     </div>
   );
 }
