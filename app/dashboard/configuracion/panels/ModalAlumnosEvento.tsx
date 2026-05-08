@@ -8,6 +8,7 @@ interface AlumnoInscrito {
   alumnoId: number;
   nombre: string;
   apellido: string;
+  telefono: string | null;
   pagado: boolean;
   totalPagado: number;
 }
@@ -232,6 +233,7 @@ export default function ModalAlumnosEvento({ evento, onClose }: Props) {
           evento={evento}
           alumnoId={pagoAlumno.alumnoId}
           nombreAlumno={`${pagoAlumno.nombre} ${pagoAlumno.apellido}`}
+          telefono={pagoAlumno.telefono}
           onClose={() => setPagoAlumno(null)}
           onPagado={() => {
             setInscritos((prev) =>

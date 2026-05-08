@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const inscritos = await prisma.alumnoEvento.findMany({
     where: { eventoId },
     include: {
-      alumno:      { select: { id: true, nombre: true, apellido: true } },
+      alumno:      { select: { id: true, nombre: true, apellido: true, telefono: true } },
       pagosEvento: { select: { monto: true } },
     },
     orderBy: { inscritoEn: "asc" },
@@ -24,6 +24,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     alumnoId:    i.alumnoId,
     nombre:      i.alumno.nombre,
     apellido:    i.alumno.apellido,
+    telefono:    i.alumno.telefono ?? null,
     pagado:      i.pagado,
     totalPagado: i.pagosEvento.reduce((s, p) => s + p.monto, 0),
   })));
