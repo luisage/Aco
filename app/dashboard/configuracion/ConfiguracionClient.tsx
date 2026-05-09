@@ -117,7 +117,7 @@ export default function ConfiguracionClient({ role }: { role: string }) {
       {tema === "novedades" && <NovedadesPanel />}
       {tema === "resenas" && <ResenasPanel />}
       {tema === "categoria-productos" && <CategoriasPanel />}
-      {tema === "productos" && <ProductosPanel />}
+      {tema === "productos" && <ProductosPanel role={role} />}
       {tema === "imagen-carrusel" && <ImagenCarruselPanel />}
       {tema === "videos" && <VideosPanel />}
       {tema === "editar-contrasena" && <CambiarContrasenaPanel />}

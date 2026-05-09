@@ -18,9 +18,10 @@ interface Dulce {
 
 interface Props {
   dulcesIniciales: Dulce[];
+  role: string;
 }
 
-export default function TiendaClient({ dulcesIniciales }: Props) {
+export default function TiendaClient({ dulcesIniciales, role }: Props) {
   const [tab, setTab] = useState<Tab>("ventas");
   const [dulces, setDulces] = useState<Dulce[]>(dulcesIniciales);
   const [showModal, setShowModal] = useState(false);
@@ -214,6 +215,7 @@ export default function TiendaClient({ dulcesIniciales }: Props) {
           dulce={dulceEditar}
           onClose={() => setDulceEditar(null)}
           onUpdated={handleUpdated}
+          role={role}
         />
       )}
 

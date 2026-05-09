@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 
-const MAPS_URL = "https://maps.app.goo.gl/tu-link-aqui";
-const TEL      = "7731836696";
-const TEL_DISPLAY = "773 183 6696";
+const MAPS_URL = "https://maps.app.goo.gl/8uJjLy3WwU8wBEcy9?g_st=aw";
+const TEL      = "7298520043";
+const TEL_DISPLAY = "729 852 0043";
 
 function IcoPin() {
   return (
@@ -155,18 +155,40 @@ export default function InfoEscuela() {
         {/* Horarios */}
         <Card icon={<IcoClock />} color="#c9a227" label="Horarios">
           <div className="flex flex-col w-full" style={{ gap: 14 }}>
+            {/* Taekwondo */}
             <div>
-              <div style={{ fontSize: 12, color: "#c9a227", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                Lunes – Viernes
+              <div style={{ fontSize: 13, color: "#c9a227", fontWeight: 800, letterSpacing: 0.5, marginBottom: 4 }}>
+                🥋 Taekwondo
               </div>
-              <div style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>4:00 pm – 9:00 pm</div>
+              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: 2 }}>
+                Lunes, miércoles y viernes
+              </div>
+              <div style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>
+                5 a 9 pm
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>
+                Grupos de acuerdo a edad
+              </div>
             </div>
             <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.07)" }} />
+            {/* Kickboxing */}
             <div>
-              <div style={{ fontSize: 12, color: "#c9a227", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                Sábado
+              <div style={{ fontSize: 13, color: "#c9a227", fontWeight: 800, letterSpacing: 0.5, marginBottom: 4 }}>
+                🥊 Kickboxing
               </div>
-              <div style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>9:00 am – 1:00 pm</div>
+              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: 6 }}>
+                Martes, jueves y sábados
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div>
+                  <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>6 a 7 pm</span>
+                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginLeft: 6 }}>Infantil</span>
+                </div>
+                <div>
+                  <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>7 a 8 pm</span>
+                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginLeft: 6 }}>Adultos</span>
+                </div>
+              </div>
             </div>
           </div>
         </Card>

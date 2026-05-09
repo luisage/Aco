@@ -25,9 +25,11 @@ interface Props {
   producto: Producto;
   onClose: () => void;
   onUpdated: (p: Producto) => void;
+  role: string;
 }
 
-export default function ModalEditarProducto({ producto, onClose, onUpdated }: Props) {
+export default function ModalEditarProducto({ producto, onClose, onUpdated, role }: Props) {
+  const puedeEditarInventario = role === "SUPERADMIN" || role === "ADMIN";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -179,14 +181,26 @@ export default function ModalEditarProducto({ producto, onClose, onUpdated }: Pr
               <label className="block text-gray-700 text-sm font-medium mb-1.5">
                 Cantidad <span className="text-[#C8102E]">*</span>
               </label>
-              <input
-                name="cantidad"
-                type="number"
-                required
-                min={0}
-                defaultValue={producto.cantidad}
-                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017]/50 transition-colors"
-              />
+              {puedeEditarInventario ? (
+                <input
+                  name="cantidad"
+                  type="number"
+                  required
+                  min={0}
+                  defaultValue={producto.cantidad}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#D4A017] focus:ring-1 focus:ring-[#D4A017]/50 transition-colors"
+                />
+              ) : (
+                <>
+                  <input type="hidden" name="cantidad" value={producto.cantidad} />
+                  <div className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-400 text-sm flex items-center justify-between">
+                    <span>{producto.cantidad}</span>
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

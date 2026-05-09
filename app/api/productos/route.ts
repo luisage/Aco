@@ -9,11 +9,13 @@ export async function GET(req: NextRequest) {
   const param = req.nextUrl.searchParams.get("estatus");
   const estatus = param === null ? undefined : param === "true";
   const categoria = req.nextUrl.searchParams.get("categoria") ?? undefined;
+  const excluirCategoria = req.nextUrl.searchParams.get("excluirCategoria") ?? undefined;
 
   const productos = await prisma.productos.findMany({
     where: {
       ...(estatus !== undefined && { estatus }),
       ...(categoria !== undefined && { categoria }),
+      ...(excluirCategoria !== undefined && { NOT: { categoria: excluirCategoria } }),
     },
     orderBy: { nombre: "asc" },
   });

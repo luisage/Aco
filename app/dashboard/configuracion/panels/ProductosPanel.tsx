@@ -21,7 +21,7 @@ function formatCosto(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n);
 }
 
-export default function ProductosPanel() {
+export default function ProductosPanel({ role }: { role: string }) {
   const [filtro, setFiltro] = useState<"activos" | "inactivos">("activos");
   const [datos, setDatos] = useState<Producto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -32,7 +32,7 @@ export default function ProductosPanel() {
   const fetchDatos = useCallback(async (f: "activos" | "inactivos") => {
     setCargando(true);
     try {
-      const res = await fetch(`/api/productos?estatus=${f === "activos"}`);
+      const res = await fetch(`/api/productos?estatus=${f === "activos"}&excluirCategoria=Tienda`);
       const json = await res.json();
       setDatos(json);
     } finally {
@@ -223,6 +223,7 @@ export default function ProductosPanel() {
           producto={productoEditar}
           onClose={() => setProductoEditar(null)}
           onUpdated={handleUpdated}
+          role={role}
         />
       )}
 
