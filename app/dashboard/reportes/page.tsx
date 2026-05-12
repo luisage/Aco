@@ -3,13 +3,15 @@ import { useState } from "react";
 import ReporteAsistencia from "./ReporteAsistencia";
 import ReporteMensualidades from "./ReporteMensualidades";
 import ReporteVentas from "./ReporteVentas";
+import ReporteCumpleanos from "./ReporteCumpleanos";
 
-type TipoReporte = "" | "asistencia" | "ingreso-mensual" | "ventas";
+type TipoReporte = "" | "asistencia" | "ingreso-mensual" | "ventas" | "cumpleanos";
 
 const TIPOS: { value: TipoReporte; label: string }[] = [
-  { value: "asistencia",      label: "Asistencia"      },
-  { value: "ingreso-mensual", label: "Ingreso mensualidad" },
-  { value: "ventas",          label: "Ventas"          },
+  { value: "asistencia",      label: "Asistencia"          },
+  { value: "ingreso-mensual", label: "Ingreso mensualidad"  },
+  { value: "ventas",          label: "Ventas"               },
+  { value: "cumpleanos",      label: "Cumpleaños"           },
 ];
 
 export default function ReportesPage() {
@@ -54,9 +56,10 @@ export default function ReportesPage() {
           </div>
         )}
 
-        {tipo === "asistencia"     && <ReporteAsistencia />}
+        {tipo === "asistencia"      && <ReporteAsistencia />}
         {tipo === "ingreso-mensual" && <ReporteMensualidades />}
         {tipo === "ventas"          && <ReporteVentas />}
+        {tipo === "cumpleanos"      && <ReporteCumpleanos />}
       </div>
     </div>
   );
