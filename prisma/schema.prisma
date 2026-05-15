@@ -264,6 +264,8 @@ model Novedades {
   descripcion  String   
   vigencia     String?
   estatus        Boolean  @default(true)
+  imagen     String?
+  publicId   String?
 }
 
 model categoriaProducto {

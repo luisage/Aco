@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import NovedadesClient from "./NovedadesClient";
 
 export default async function Novedades() {
-  let novedades: { id: number; titulo: string; descripcion: string; vigencia: string | null }[] = [];
+  let novedades: { id: number; titulo: string; descripcion: string; vigencia: string | null; imagen: string | null; publicId: string | null }[] = [];
   try {
     novedades = await prisma.novedades.findMany({
       where: { estatus: true },

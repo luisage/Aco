@@ -10,6 +10,8 @@ interface Novedad {
   descripcion: string;
   vigencia: string | null;
   estatus: boolean;
+  imagen: string | null;
+  publicId: string | null;
 }
 
 export default function NovedadesPanel() {

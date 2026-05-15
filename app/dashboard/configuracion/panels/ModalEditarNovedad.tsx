@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { editarNovedad } from "@/app/actions/novedades";
+import ImageUploader from "./ImageUploader";
 
 interface Novedad {
   id: number;
@@ -8,6 +9,8 @@ interface Novedad {
   descripcion: string;
   vigencia: string | null;
   estatus: boolean;
+  imagen: string | null;
+  publicId: string | null;
 }
 
 interface Props {
@@ -19,7 +22,15 @@ interface Props {
 export default function ModalEditarNovedad({ novedad, onClose, onUpdated }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageCleared, setImageCleared] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  function handleFileChange(file: File | null) {
+    setImageFile(file);
+    if (file === null) setImageCleared(true);
+    else setImageCleared(false);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,7 +47,27 @@ export default function ModalEditarNovedad({ novedad, onClose, onUpdated }: Prop
 
     setLoading(true);
     try {
-      const actualizada = await editarNovedad(novedad.id, { titulo, descripcion, vigencia });
+      let imagenUrl: string | null = novedad.imagen;
+      let imagenPublicId: string | null = novedad.publicId;
+
+      if (imageFile) {
+        const uploadFd = new FormData();
+        uploadFd.append("file", imageFile);
+        const res = await fetch("/api/upload", { method: "POST", body: uploadFd });
+        if (!res.ok) throw new Error("Error al subir imagen");
+        const data = await res.json();
+        imagenUrl = data.url;
+        imagenPublicId = data.publicId;
+      } else if (imageCleared) {
+        imagenUrl = null;
+        imagenPublicId = null;
+      }
+
+      const actualizada = await editarNovedad(
+        novedad.id,
+        { titulo, descripcion, vigencia, imagen: imagenUrl, publicId: imagenPublicId },
+        novedad.publicId
+      );
       onUpdated(actualizada as Novedad);
     } catch {
       setError("Error al actualizar. Intenta de nuevo.");
@@ -51,9 +82,9 @@ export default function ModalEditarNovedad({ novedad, onClose, onUpdated }: Prop
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-gray-200 border border-gray-300 rounded-2xl shadow-2xl w-full max-w-lg">
+      <div className="relative bg-gray-200 border border-gray-300 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 bg-blue-100 border-b border-blue-200 rounded-t-2xl">
+        <div className="flex items-center justify-between px-6 py-5 bg-blue-100 border-b border-blue-200 rounded-t-2xl flex-shrink-0">
           <h2 className="text-[#0d0d0d] font-bold text-lg">Editar novedad</h2>
           <button
             onClick={onClose}
@@ -67,7 +98,7 @@ export default function ModalEditarNovedad({ novedad, onClose, onUpdated }: Prop
         </div>
 
         {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} className="px-6 py-6 space-y-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="px-6 py-6 space-y-5 overflow-y-auto">
           {/* Título */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-1.5">
@@ -112,6 +143,17 @@ export default function ModalEditarNovedad({ novedad, onClose, onUpdated }: Prop
             />
           </div>
 
+          {/* Imagen */}
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1.5">
+              Imagen <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <ImageUploader
+              initialUrl={novedad.imagen}
+              onFileChange={handleFileChange}
+            />
+          </div>
+
           {error && (
             <p className="text-[#C8102E] text-sm bg-[#C8102E]/10 border border-[#C8102E]/30 rounded-xl px-4 py-2.5">
               {error}
@@ -131,8 +173,9 @@ export default function ModalEditarNovedad({ novedad, onClose, onUpdated }: Prop
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-colors disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
+              {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
               {loading ? "Actualizando..." : "Actualizar"}
             </button>
           </div>
