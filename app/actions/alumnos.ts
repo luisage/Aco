@@ -171,3 +171,11 @@ export async function editarAlumno(id: number, data: RegistroAlumnoData) {
 
   return { id };
 }
+
+export async function modificarEstatusAlumno(id: number, estado: EstadoAlumno) {
+  const session = await getSession();
+  if (!session) throw new Error("No autorizado");
+
+  await prisma.alumno.update({ where: { id }, data: { estado } });
+  return { id };
+}

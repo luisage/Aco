@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ModalEditarAlumno from "./ModalEditarAlumno";
 import ModalRegistrarPago from "./ModalRegistrarPago";
+import ModalModificarEstatus from "./ModalModificarEstatus";
 import { registrarAsistencia } from "@/app/actions/asistencias";
 
 type EstadoAlumno = "ACTIVO" | "INACTIVO" | "BAJA";
@@ -54,7 +55,7 @@ function formatFecha(fechaIso: string): string {
   });
 }
 
-function MenuTresPuntos({ alumnoId, onEditar, onPago }: { alumnoId: number; onEditar: (id: number) => void; onPago: (id: number) => void }) {
+function MenuTresPuntos({ alumnoId, onEditar, onEstatus, onPago }: { alumnoId: number; onEditar: (id: number) => void; onEstatus: (id: number) => void; onPago: (id: number) => void }) {
   const [abierto, setAbierto] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -110,14 +111,13 @@ function MenuTresPuntos({ alumnoId, onEditar, onPago }: { alumnoId: number; onEd
             Editar
           </button>
           <button
-            onClick={() => { setAbierto(false); }}
+            onClick={() => { setAbierto(false); onEstatus(alumnoId); }}
             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors"
           >
             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Ver datos completos
+            Modificar estatus
           </button>
           <div className="border-t border-gray-100 my-1" />
           <button
@@ -141,6 +141,7 @@ export default function AlumnosClient() {
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [cargando, setCargando] = useState(true);
   const [alumnoEditarId, setAlumnoEditarId] = useState<number | null>(null);
+  const [alumnoEstatusId, setAlumnoEstatusId] = useState<number | null>(null);
   const [alumnoPagoId, setAlumnoPagoId] = useState<number | null>(null);
   const [registrando, setRegistrando] = useState<Set<number>>(new Set());
 
@@ -330,7 +331,7 @@ export default function AlumnosClient() {
                   </td>
                   {/* Menú */}
                   <td className="px-4 py-4">
-                    <MenuTresPuntos alumnoId={a.id} onEditar={setAlumnoEditarId} onPago={setAlumnoPagoId} />
+                    <MenuTresPuntos alumnoId={a.id} onEditar={setAlumnoEditarId} onEstatus={setAlumnoEstatusId} onPago={setAlumnoPagoId} />
                   </td>
                 </tr>
               ))
@@ -350,6 +351,23 @@ export default function AlumnosClient() {
         }}
       />
     )}
+
+    {alumnoEstatusId !== null && (() => {
+      const alumno = alumnos.find((a) => a.id === alumnoEstatusId);
+      if (!alumno) return null;
+      return (
+        <ModalModificarEstatus
+          alumnoId={alumno.id}
+          alumnoNombre={`${alumno.nombre} ${alumno.apellido}`}
+          estatusActual={alumno.estado}
+          onClose={() => setAlumnoEstatusId(null)}
+          onActualizado={() => {
+            setAlumnoEstatusId(null);
+            fetchAlumnos(estado, busqueda);
+          }}
+        />
+      );
+    })()}
 
     {alumnoPagoId !== null && (
       <ModalRegistrarPago
