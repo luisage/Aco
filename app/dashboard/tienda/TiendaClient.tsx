@@ -4,8 +4,9 @@ import ModalAgregarDulce from "./ModalAgregarDulce";
 import ModalEditarDulce from "./ModalEditarDulce";
 import ModalQRDulce from "./ModalQRDulce";
 import VentasClient from "./VentasClient";
+import ApartadosClient from "./ApartadosClient";
 
-type Tab = "dulces" | "ventas";
+type Tab = "dulces" | "ventas" | "apartados";
 
 interface Dulce {
   id: number;
@@ -57,7 +58,7 @@ export default function TiendaClient({ dulcesIniciales, role }: Props) {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-blue-100 rounded-xl p-1 gap-1 mb-6 w-fit">
+      <div className="flex bg-blue-100 rounded-xl p-1 gap-1 mb-6 w-full sm:w-fit overflow-x-auto">
         {([
           { key: "ventas" as Tab, label: "Ventas", icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,11 +73,18 @@ export default function TiendaClient({ dulcesIniciales, role }: Props) {
               <path d="m9 11 1 9"/><path d="M4.5 15.5h15"/><path d="m15 11-1 9"/>
             </svg>
           )},
+          { key: "apartados" as Tab, label: "Apartar", icon: (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6" />
+              <path d="M20 13v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4" />
+              <path d="M4 13h16" /><path d="M12 4v2" />
+            </svg>
+          )},
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map(({ key, label, icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-2 px-3 sm:px-5 py-2.5 text-sm font-semibold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
               tab === key
                 ? "bg-white text-[#003087] shadow-sm border-b-2 border-[#D4A017]"
                 : "text-blue-700 hover:text-[#003087] hover:bg-white/50"
@@ -202,6 +210,9 @@ export default function TiendaClient({ dulcesIniciales, role }: Props) {
 
       {/* Panel Ventas */}
       {tab === "ventas" && <VentasClient />}
+
+      {/* Panel Apartados */}
+      {tab === "apartados" && <ApartadosClient />}
 
       {showModal && (
         <ModalAgregarDulce

@@ -94,6 +94,7 @@ model Alumno {
   asistencias         Asistencia[]
   combates            Combate[]
   eventos AlumnoEvento[]
+  apartados  Apartado[]
   
   @@map("alumnos")
 }
@@ -286,6 +287,7 @@ model productos {
   descripcionVenta String?
   cantidad Int  @default(0)
   detalles    DetalleVenta[]
+  apartados  DetalleApartado[]
 }
 
 model Venta {
@@ -297,6 +299,7 @@ model Venta {
   usuarioId   Int
   usuario     User           @relation(fields: [usuarioId], references: [id])
   detalles    DetalleVenta[]
+  apartado   Apartado?
 }
 
 model DetalleVenta {
@@ -403,4 +406,69 @@ model PagoEvento {
 
   @@index([alumnoEventoId])
   @@map("pagos_evento")
+}
+
+enum EstadoApartado {
+  PENDIENTE   // tiene saldo, se puede abonar
+  COMPLETADO  // se liquidó y se generó la venta
+  CANCELADO
+}
+
+model Apartado {
+  id           Int             @id @default(autoincrement())
+  alumnoId     Int             @map("alumno_id")
+  alumno       Alumno          @relation(fields: [alumnoId], references: [id])
+
+  total        Decimal         @db.Decimal(10, 2) // congelado al crear
+  totalAbonado Decimal         @default(0) @db.Decimal(10, 2)
+  estado       EstadoApartado  @default(PENDIENTE)
+
+  fechaApartado DateTime       @default(now()) @map("fecha_apartado")
+  fechaLimite   DateTime?      @map("fecha_limite") @db.Date
+  fechaLiquidacion DateTime?   @map("fecha_liquidacion")
+  notas         String?
+
+  usuarioId    Int?            @map("usuario_id") // quién lo registró (si tienes tabla Usuario)
+
+  detalles     DetalleApartado[]
+  abonos       AbonoApartado[]
+
+  ventaId      Int?            @unique @map("venta_id") // se llena al liquidar
+  venta        Venta?          @relation(fields: [ventaId], references: [id])
+
+  @@index([alumnoId])
+  @@index([estado])
+  @@map("apartados")
+}
+
+model DetalleApartado {
+  id             Int       @id @default(autoincrement())
+  apartadoId     Int       @map("apartado_id")
+  apartado       Apartado  @relation(fields: [apartadoId], references: [id], onDelete: Cascade)
+
+  productoId     Int       @map("producto_id")
+  producto       productos @relation(fields: [productoId], references: [id])
+
+  cantidad       Int
+  precioUnitario Decimal   @db.Decimal(8, 2) // precio congelado al momento del apartado
+  subtotal       Decimal   @db.Decimal(10, 2)
+
+  @@index([apartadoId])
+  @@map("detalle_apartado")
+}
+
+model AbonoApartado {
+  id         Int        @id @default(autoincrement())
+  apartadoId Int        @map("apartado_id")
+  apartado   Apartado   @relation(fields: [apartadoId], references: [id], onDelete: Cascade)
+
+  monto      Decimal    @db.Decimal(8, 2)
+  metodoPago MetodoPago @default(EFECTIVO)
+  fechaPago  DateTime   @default(now()) @map("fecha_pago")
+  referencia String?    // folio, últimos 4 dígitos, etc.
+  notas      String?
+  usuarioId  Int?       @map("usuario_id")
+
+  @@index([apartadoId])
+  @@map("abonos_apartado")
 }
