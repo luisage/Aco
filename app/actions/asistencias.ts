@@ -17,3 +17,14 @@ export async function registrarAsistencia(alumnoId: number) {
 
   return { ok: true };
 }
+
+export async function quitarAsistencia(alumnoId: number) {
+  const session = await getSession();
+  if (!session) throw new Error("No autorizado");
+
+  await prisma.asistencia.deleteMany({
+    where: { alumnoId, fecha: fechaHoyMexico() },
+  });
+
+  return { ok: true };
+}

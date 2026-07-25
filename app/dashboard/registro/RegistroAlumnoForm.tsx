@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { registrarAlumno, type RegistroAlumnoData } from "@/app/actions/alumnos";
 
 type EstadoAlumno = "ACTIVO" | "INACTIVO" | "BAJA";
@@ -82,6 +82,7 @@ const initialForm = {
   fechaNacimiento: "",
   telefono: "",
   estado: "ACTIVO" as EstadoAlumno,
+  grado: "",
   fechaInscripcion: today,
   mensualidad: "",
   diaLimitePago: "5",
@@ -116,6 +117,13 @@ export default function RegistroAlumnoForm() {
   const [tutores, setTutores] = useState<TutorState[]>([]);
   const [personas, setPersonas] = useState<PersonaState[]>([]);
   const [expectativas, setExpectativas] = useState<Set<TipoExpectativa>>(new Set());
+  const [grados, setGrados] = useState<{ id: number; nombre: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/grados")
+      .then((r) => r.json())
+      .then((d) => setGrados(Array.isArray(d) ? d : []));
+  }, []);
 
   function set(field: string, value: unknown) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -194,6 +202,7 @@ export default function RegistroAlumnoForm() {
         telefono: form.telefono.trim() || null,
         fotoUrl: fotoUrl || null,
         estado: form.estado,
+        grado: form.grado || null,
         fechaInscripcion: form.fechaInscripcion,
         mensualidad: parseFloat(form.mensualidad),
         diaLimitePago: parseInt(form.diaLimitePago) || 5,
@@ -326,6 +335,15 @@ export default function RegistroAlumnoForm() {
           <div>
             <label className={labelClass}>Fecha de inscripción <Required /></label>
             <input type="date" value={form.fechaInscripcion} onChange={(e) => set("fechaInscripcion", e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Grado <Optional /></label>
+            <select value={form.grado} onChange={(e) => set("grado", e.target.value)} className={inputClass}>
+              <option value="">Selecciona un grado</option>
+              {grados.map((g) => (
+                <option key={g.id} value={g.nombre}>{g.nombre}</option>
+              ))}
+            </select>
           </div>
         </div>
       </SectionCard>

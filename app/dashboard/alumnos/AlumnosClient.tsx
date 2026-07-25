@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ModalEditarAlumno from "./ModalEditarAlumno";
 import ModalRegistrarPago from "./ModalRegistrarPago";
 import ModalModificarEstatus from "./ModalModificarEstatus";
-import { registrarAsistencia } from "@/app/actions/asistencias";
+import { registrarAsistencia, quitarAsistencia } from "@/app/actions/asistencias";
 
 type EstadoAlumno = "ACTIVO" | "INACTIVO" | "BAJA";
 type EstadoPago = "AL_CORRIENTE" | "ATRASADO" | "ADEUDO";
@@ -145,17 +145,21 @@ export default function AlumnosClient() {
   const [alumnoPagoId, setAlumnoPagoId] = useState<number | null>(null);
   const [registrando, setRegistrando] = useState<Set<number>>(new Set());
 
-  async function handleAsistencia(alumnoId: number) {
+  async function handleAsistencia(alumnoId: number, tieneAsistencia: boolean) {
     setRegistrando((prev) => new Set(prev).add(alumnoId));
     setAlumnos((prev) =>
-      prev.map((a) => a.id === alumnoId ? { ...a, tieneAsistenciaHoy: true } : a)
+      prev.map((a) => a.id === alumnoId ? { ...a, tieneAsistenciaHoy: !tieneAsistencia } : a)
     );
     try {
-      await registrarAsistencia(alumnoId);
+      if (tieneAsistencia) {
+        await quitarAsistencia(alumnoId);
+      } else {
+        await registrarAsistencia(alumnoId);
+      }
     } catch {
       // Revertir si falla
       setAlumnos((prev) =>
-        prev.map((a) => a.id === alumnoId ? { ...a, tieneAsistenciaHoy: false } : a)
+        prev.map((a) => a.id === alumnoId ? { ...a, tieneAsistenciaHoy: tieneAsistencia } : a)
       );
     } finally {
       setRegistrando((prev) => { const s = new Set(prev); s.delete(alumnoId); return s; });
@@ -238,8 +242,49 @@ export default function AlumnosClient() {
         </div>
       </div>
 
+      {/* Lista mobile */}
+      <div className="sm:hidden bg-gray-200">
+        {cargando ? (
+          <div className="px-6 py-12 flex justify-center">
+            <div className="w-6 h-6 border-2 border-[#D4A017] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : alumnos.length === 0 ? (
+          <div className="px-6 py-12 text-center text-gray-400 text-sm">
+            {busqueda
+              ? `Sin resultados para "${busqueda}".`
+              : `No hay alumnos ${estadoLabel.toLowerCase()}.`}
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {alumnos.map((a) => (
+              <li key={a.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => handleAsistencia(a.id, a.tieneAsistenciaHoy)}
+                  disabled={registrando.has(a.id)}
+                  title={a.tieneAsistenciaHoy ? "Quitar asistencia" : "Registrar asistencia"}
+                  className={`shrink-0 w-4 h-4 rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait ${
+                    a.tieneAsistenciaHoy ? "bg-green-500 hover:bg-green-600" : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-800 truncate">{a.nombre}</p>
+                  <p className="text-xs text-gray-500 truncate">{a.apellido}</p>
+                </div>
+                <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${PAGO_BADGE[a.estadoPago].cls}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    a.estadoPago === "AL_CORRIENTE" ? "bg-green-500" : a.estadoPago === "ATRASADO" ? "bg-yellow-500" : "bg-red-500"
+                  }`} />
+                  {PAGO_BADGE[a.estadoPago].label}
+                </span>
+                <MenuTresPuntos alumnoId={a.id} onEditar={setAlumnoEditarId} onEstatus={setAlumnoEstatusId} onPago={setAlumnoPagoId} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* Tabla */}
-      <div className="overflow-x-auto bg-gray-200">
+      <div className="hidden sm:block overflow-x-auto bg-gray-200">
         <table className="w-full table-fixed">
           <colgroup>
             <col style={{ width: "4%" }} />
@@ -285,19 +330,14 @@ export default function AlumnosClient() {
                 <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   {/* Asistencia */}
                   <td className="px-4 py-4 text-center">
-                    {a.tieneAsistenciaHoy ? (
-                      <span
-                        title="Asistencia registrada"
-                        className="inline-block w-4 h-4 rounded-full bg-green-500"
-                      />
-                    ) : (
-                      <button
-                        onClick={() => handleAsistencia(a.id)}
-                        disabled={registrando.has(a.id)}
-                        title="Registrar asistencia"
-                        className="w-4 h-4 rounded-full bg-gray-300 hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-wait"
-                      />
-                    )}
+                    <button
+                      onClick={() => handleAsistencia(a.id, a.tieneAsistenciaHoy)}
+                      disabled={registrando.has(a.id)}
+                      title={a.tieneAsistenciaHoy ? "Quitar asistencia" : "Registrar asistencia"}
+                      className={`w-4 h-4 rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait ${
+                        a.tieneAsistenciaHoy ? "bg-green-500 hover:bg-green-600" : "bg-gray-300 hover:bg-gray-400"
+                      }`}
+                    />
                   </td>
                   {/* Nombre */}
                   <td className="px-6 py-4 text-gray-800 text-sm font-medium truncate">{a.nombre}</td>

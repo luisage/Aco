@@ -4,14 +4,16 @@ import ReporteAsistencia from "./ReporteAsistencia";
 import ReporteMensualidades from "./ReporteMensualidades";
 import ReporteVentas from "./ReporteVentas";
 import ReporteCumpleanos from "./ReporteCumpleanos";
+import ReporteExamenes from "./ReporteExamenes";
 
-type TipoReporte = "" | "asistencia" | "ingreso-mensual" | "ventas" | "cumpleanos";
+type TipoReporte = "" | "asistencia" | "ingreso-mensual" | "ventas" | "cumpleanos" | "examenes";
 
 const TIPOS: { value: TipoReporte; label: string }[] = [
   { value: "asistencia",      label: "Asistencia"          },
   { value: "ingreso-mensual", label: "Ingreso mensualidad"  },
   { value: "ventas",          label: "Ventas"               },
   { value: "cumpleanos",      label: "Cumpleaños"           },
+  { value: "examenes",        label: "Exámenes"             },
 ];
 
 export default function ReportesPage() {
@@ -60,6 +62,7 @@ export default function ReportesPage() {
         {tipo === "ingreso-mensual" && <ReporteMensualidades />}
         {tipo === "ventas"          && <ReporteVentas />}
         {tipo === "cumpleanos"      && <ReporteCumpleanos />}
+        {tipo === "examenes"        && <ReporteExamenes />}
       </div>
     </div>
   );

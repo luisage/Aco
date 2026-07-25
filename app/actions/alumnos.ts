@@ -32,6 +32,7 @@ export interface RegistroAlumnoData {
   fotoUrl?: string | null;
   estado: EstadoAlumno;
   fechaInscripcion: string;
+  grado?: string | null;
   mensualidad: number;
   diaLimitePago: number;
   grupoSanguineo?: string | null;
@@ -68,6 +69,7 @@ export async function registrarAlumno(data: RegistroAlumnoData) {
       fotoUrl: data.fotoUrl ?? null,
       estado: data.estado,
       fechaInscripcion: new Date(data.fechaInscripcion),
+      grado: data.grado ?? null,
       mensualidad: data.mensualidad,
       diaLimitePago: data.diaLimitePago,
       grupoSanguineo: data.grupoSanguineo ?? null,
@@ -128,6 +130,7 @@ export async function editarAlumno(id: number, data: RegistroAlumnoData) {
         fotoUrl: data.fotoUrl ?? null,
         estado: data.estado,
         fechaInscripcion: new Date(data.fechaInscripcion),
+        grado: data.grado ?? null,
         mensualidad: data.mensualidad,
         diaLimitePago: data.diaLimitePago,
         grupoSanguineo: data.grupoSanguineo ?? null,

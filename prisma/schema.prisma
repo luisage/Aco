@@ -52,6 +52,7 @@ model Alumno {
   // Datos deportivos
   estado              EstadoAlumno  @default(ACTIVO)
   fechaInscripcion    DateTime      @map("fecha_inscripcion") @default(now()) @db.Date
+  grado               String?
 
   // Datos de pago
   mensualidad         Decimal       @db.Decimal(8, 2)
@@ -386,6 +387,7 @@ model AlumnoEvento {
   confirmado   Boolean   @default(true)
   notas        String?
   inscritoEn   DateTime  @default(now())
+  grado        String?
 
   pagosEvento  PagoEvento[]
 
@@ -471,4 +473,13 @@ model AbonoApartado {
 
   @@index([apartadoId])
   @@map("abonos_apartado")
+}
+
+model grados {
+  id          Int      @id @default(autoincrement())
+  nombre      String 
+  descripcion  String?   
+  estatus        Boolean  @default(true)
+  orden       Int      @default(0)
+  creadoEn    DateTime @default(now())
 }

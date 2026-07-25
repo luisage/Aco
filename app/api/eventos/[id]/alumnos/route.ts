@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { calcularGradoSiguiente } from "@/lib/grados";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -38,12 +39,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const eventoId = parseInt(id);
   if (isNaN(eventoId)) return Response.json({ error: "ID inválido" }, { status: 400 });
 
-  const { alumnoId } = await req.json();
-  if (!alumnoId) return Response.json({ error: "alumnoId requerido" }, { status: 400 });
+  const { alumnoId: alumnoIdRaw } = await req.json();
+  if (!alumnoIdRaw) return Response.json({ error: "alumnoId requerido" }, { status: 400 });
+  const alumnoId = parseInt(alumnoIdRaw);
 
   try {
+    const evento = await prisma.evento.findUnique({ where: { id: eventoId }, select: { tipoEvento: true } });
+    if (!evento) return Response.json({ error: "Evento no encontrado" }, { status: 404 });
+
+    // Si el evento es un examen, se calcula el grado siguiente al actual del alumno
+    let grado: string | null = null;
+    if (evento.tipoEvento === "EXAMEN") {
+      const alumno = await prisma.alumno.findUnique({ where: { id: alumnoId }, select: { grado: true } });
+      grado = await calcularGradoSiguiente(alumno?.grado ?? null);
+    }
+
     const inscrito = await prisma.alumnoEvento.create({
-      data: { alumnoId: parseInt(alumnoId), eventoId },
+      data: { alumnoId, eventoId, grado },
       include: { alumno: { select: { id: true, nombre: true, apellido: true } } },
     });
     return Response.json({
@@ -51,6 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       alumnoId: inscrito.alumnoId,
       nombre:   inscrito.alumno.nombre,
       apellido: inscrito.alumno.apellido,
+      grado:    inscrito.grado,
     }, { status: 201 });
   } catch {
     return Response.json({ error: "El alumno ya está inscrito en este evento" }, { status: 409 });

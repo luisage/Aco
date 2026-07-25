@@ -8,11 +8,16 @@ export async function GET(req: NextRequest) {
     if (!session) return Response.json({ error: "No autorizado" }, { status: 403 });
 
     const dias = parseInt(req.nextUrl.searchParams.get("dias") ?? "7");
+    const alumnoIdParam = req.nextUrl.searchParams.get("alumnoId");
+    const alumnoId = alumnoIdParam ? parseInt(alumnoIdParam) : null;
     const hoy = new Date();
     const desde = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate() - (dias - 1)));
 
     const asistencias = await prisma.asistencia.findMany({
-      where: { fecha: { gte: desde } },
+      where: {
+        fecha: { gte: desde },
+        ...(alumnoId ? { alumnoId } : {}),
+      },
       select: { fecha: true },
     });
 
@@ -25,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
     for (const a of asistencias) {
       const key = new Date(a.fecha).toISOString().split("T")[0];
-      if (key in conteo) conteo[key]++;
+      if (key in conteo) conteo[key] = alumnoId ? 1 : conteo[key] + 1;
     }
 
     const data = Object.entries(conteo).map(([fecha, total]) => {

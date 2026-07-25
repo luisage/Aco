@@ -18,7 +18,7 @@ interface AlumnoCompleto {
   nombre: string; apellido: string;
   fechaNacimiento: string; fechaInscripcion: string;
   telefono: string | null; fotoUrl: string | null;
-  estado: EstadoAlumno; mensualidad: number; diaLimitePago: number;
+  estado: EstadoAlumno; grado: string | null; mensualidad: number; diaLimitePago: number;
   grupoSanguineo: string | null; alergias: string | null;
   lesionesAnteriores: string | null; padecimientosHereditarios: string | null;
   usaLentes: boolean; usaOrtodoncia: boolean; usaZapatosOrtopedicos: boolean;
@@ -64,6 +64,13 @@ function EditForm({ data, onActualizado, onClose }: { data: AlumnoCompleto; onAc
   const fotoRef = useRef<HTMLInputElement>(null);
   const [fotoUrl, setFotoUrl] = useState(data.fotoUrl ?? "");
   const [fotoUploading, setFotoUploading] = useState(false);
+  const [grados, setGrados] = useState<{ id: number; nombre: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/grados")
+      .then((r) => r.json())
+      .then((d) => setGrados(Array.isArray(d) ? d : []));
+  }, []);
 
   const [form, setFormState] = useState({
     nombre: data.nombre,
@@ -71,6 +78,7 @@ function EditForm({ data, onActualizado, onClose }: { data: AlumnoCompleto; onAc
     fechaNacimiento: data.fechaNacimiento,
     telefono: data.telefono ?? "",
     estado: data.estado,
+    grado: data.grado ?? "",
     fechaInscripcion: data.fechaInscripcion,
     mensualidad: String(data.mensualidad),
     diaLimitePago: String(data.diaLimitePago),
@@ -142,6 +150,7 @@ function EditForm({ data, onActualizado, onClose }: { data: AlumnoCompleto; onAc
         nombre: form.nombre.trim(), apellido: form.apellido.trim(),
         fechaNacimiento: form.fechaNacimiento, telefono: form.telefono.trim() || null,
         fotoUrl: fotoUrl || null, estado: form.estado,
+        grado: form.grado || null,
         fechaInscripcion: form.fechaInscripcion,
         mensualidad: parseFloat(form.mensualidad), diaLimitePago: parseInt(form.diaLimitePago) || 5,
         grupoSanguineo: form.grupoSanguineo.trim() || null,
@@ -201,6 +210,15 @@ function EditForm({ data, onActualizado, onClose }: { data: AlumnoCompleto; onAc
             </select>
           </div>
           <div><label className={labelClass}>Fecha de inscripción <Required /></label><input type="date" value={form.fechaInscripcion} onChange={(e) => set("fechaInscripcion", e.target.value)} className={inputClass} /></div>
+          <div>
+            <label className={labelClass}>Grado <Optional /></label>
+            <select value={form.grado} onChange={(e) => set("grado", e.target.value)} className={inputClass}>
+              <option value="">Selecciona un grado</option>
+              {grados.map((g) => (
+                <option key={g.id} value={g.nombre}>{g.nombre}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </SectionCard>
 
