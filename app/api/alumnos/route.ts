@@ -1,18 +1,20 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { ahoraEnMexico } from "@/lib/fechaMexico";
 
 function calcularEstadoPago(
   day: number,
   mesActualKey: string,
   pagosMes: Set<string>,
-): "AL_CORRIENTE" | "ATRASADO" | "ADEUDO" {
+): "AL_CORRIENTE" | "ATRASADO" | "ADEUDO" | "A_PAGAR" {
+  const pago = pagosMes.has(mesActualKey);
   if (day >= 28) {
-    // Ciclo del mes actual terminó — si no pagó, adeuda
-    return pagosMes.has(mesActualKey) ? "AL_CORRIENTE" : "ADEUDO";
+    // Ciclo del mes actual terminó — si ya pagó, puede pagar el siguiente mes; si no, adeuda
+    return pago ? "A_PAGAR" : "ADEUDO";
   }
-  if (pagosMes.has(mesActualKey)) return "AL_CORRIENTE";
-  if (day <= 5) return "AL_CORRIENTE"; // dentro de la ventana de pago (días 1-5)
+  if (pago) return "AL_CORRIENTE";
+  if (day <= 5) return "A_PAGAR"; // ventana de gracia (días 1-5) sin pagar aún
   return "ATRASADO"; // días 6-27 sin pagar
 }
 
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
     const estado = searchParams.get("estado") ?? "ACTIVO";
     const q = searchParams.get("q")?.trim() ?? "";
 
-    const now = new Date();
+    const now = ahoraEnMexico();
     const hoyInicio = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const hoyFin   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
 

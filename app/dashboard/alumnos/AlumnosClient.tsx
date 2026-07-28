@@ -6,7 +6,7 @@ import ModalModificarEstatus from "./ModalModificarEstatus";
 import { registrarAsistencia, quitarAsistencia } from "@/app/actions/asistencias";
 
 type EstadoAlumno = "ACTIVO" | "INACTIVO" | "BAJA";
-type EstadoPago = "AL_CORRIENTE" | "ATRASADO" | "ADEUDO";
+type EstadoPago = "AL_CORRIENTE" | "ATRASADO" | "ADEUDO" | "A_PAGAR";
 
 interface Alumno {
   id: number;
@@ -24,6 +24,14 @@ const PAGO_BADGE: Record<EstadoPago, { cls: string; label: string }> = {
   AL_CORRIENTE: { cls: "bg-green-100 text-green-700 border-green-300",   label: "Al corriente" },
   ATRASADO:     { cls: "bg-yellow-100 text-yellow-700 border-yellow-300", label: "Atraso"       },
   ADEUDO:       { cls: "bg-red-100 text-red-600 border-red-300",          label: "Adeudo"       },
+  A_PAGAR:      { cls: "bg-orange-100 text-orange-700 border-orange-300", label: "A pagar"      },
+};
+
+const PAGO_DOT: Record<EstadoPago, string> = {
+  AL_CORRIENTE: "bg-green-500",
+  ATRASADO:     "bg-yellow-500",
+  ADEUDO:       "bg-red-500",
+  A_PAGAR:      "bg-orange-500",
 };
 
 const ESTADO_OPTS: { value: EstadoAlumno; label: string }[] = [
@@ -271,9 +279,7 @@ export default function AlumnosClient() {
                   <p className="text-xs text-gray-500 truncate">{a.apellido}</p>
                 </div>
                 <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${PAGO_BADGE[a.estadoPago].cls}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    a.estadoPago === "AL_CORRIENTE" ? "bg-green-500" : a.estadoPago === "ATRASADO" ? "bg-yellow-500" : "bg-red-500"
-                  }`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${PAGO_DOT[a.estadoPago]}`} />
                   {PAGO_BADGE[a.estadoPago].label}
                 </span>
                 <MenuTresPuntos alumnoId={a.id} onEditar={setAlumnoEditarId} onEstatus={setAlumnoEstatusId} onPago={setAlumnoPagoId} />
@@ -363,9 +369,7 @@ export default function AlumnosClient() {
                   {/* Pago */}
                   <td className="px-6 py-4 hidden md:table-cell">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${PAGO_BADGE[a.estadoPago].cls}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        a.estadoPago === "AL_CORRIENTE" ? "bg-green-500" : a.estadoPago === "ATRASADO" ? "bg-yellow-500" : "bg-red-500"
-                      }`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${PAGO_DOT[a.estadoPago]}`} />
                       {PAGO_BADGE[a.estadoPago].label}
                     </span>
                   </td>
