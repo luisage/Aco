@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { ahoraEnMexico } from "@/lib/fechaMexico";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
     const dias = parseInt(req.nextUrl.searchParams.get("dias") ?? "7");
     const alumnoIdParam = req.nextUrl.searchParams.get("alumnoId");
     const alumnoId = alumnoIdParam ? parseInt(alumnoIdParam) : null;
-    const hoy = new Date();
+    const hoy = ahoraEnMexico();
     const desde = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate() - (dias - 1)));
 
     const asistencias = await prisma.asistencia.findMany({

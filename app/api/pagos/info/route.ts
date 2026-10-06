@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { ahoraEnMexico } from "@/lib/fechaMexico";
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
     });
     if (!alumno) return Response.json({ error: "Alumno no encontrado" }, { status: 404 });
 
-    const hoy = new Date();
+    const hoy = ahoraEnMexico();
     const mesCorrespondiente = getMesCorrespondiente(hoy);
     const [mesYear, mesMonth] = mesCorrespondiente.split("-");
     const mesLabel = `${MESES[parseInt(mesMonth) - 1]} ${mesYear}`;

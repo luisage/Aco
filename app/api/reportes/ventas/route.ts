@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { ahoraEnMexico } from "@/lib/fechaMexico";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -10,9 +11,10 @@ export async function GET(req: NextRequest) {
   const desde = params.get("desde"); // YYYY-MM-DD
   const hasta = params.get("hasta"); // YYYY-MM-DD
   const filtro = params.get("filtro") ?? "todos"; // todos | tienda | productos
+  const hoyMx = ahoraEnMexico();
 
-  const fechaDesde = desde ? new Date(`${desde}T00:00:00`) : new Date(new Date().setHours(0, 0, 0, 0));
-  const fechaHasta = hasta ? new Date(`${hasta}T23:59:59`) : new Date(new Date().setHours(23, 59, 59, 999));
+  const fechaDesde = desde ? new Date(`${desde}T00:00:00`) : new Date(Date.UTC(hoyMx.getUTCFullYear(), hoyMx.getUTCMonth(), hoyMx.getUTCDate(), 0, 0, 0));
+  const fechaHasta = hasta ? new Date(`${hasta}T23:59:59`) : new Date(Date.UTC(hoyMx.getUTCFullYear(), hoyMx.getUTCMonth(), hoyMx.getUTCDate(), 23, 59, 59, 999));
 
   // Filtro por categoría de producto
   let categoriaWhere: object | undefined;
